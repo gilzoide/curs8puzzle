@@ -1,0 +1,8 @@
+local util = hell.utils
+
+build {
+	input = util.glob '*.c',
+	links = {'mosaic_color', 'ncurses', 'panel'},
+	flags = '-Wall -O3',
+	output = '8puzzle'
+}

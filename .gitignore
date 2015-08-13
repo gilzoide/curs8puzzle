@@ -1,0 +1,10 @@
+# text backups
+*~
+*.swp
+
+# cscope
+*cscope*
+
+# objects
+*.o
+8puzzle
