@@ -79,6 +79,8 @@ void printNumber (int num, int y, int x) {
 	int i;
 	for (i = 0; i < CELL_HEIGHT; i++) {
 		mvwaddstr (field, y * (CELL_HEIGHT + 1) + i + 1, x * (CELL_WIDTH + 1) + 1,
+				"       ");
+		mvwaddstr (field, y * (CELL_HEIGHT + 1) + i + 1, x * (CELL_WIDTH + 1) + 1,
 				numbers[num][i]);
 	}
 	wrefresh (field);
@@ -87,6 +89,9 @@ void printNumber (int num, int y, int x) {
 
 /// Our map
 int map[SIDE_SIZE][SIDE_SIZE];
+/// Blank positions
+int blank_x;
+int blank_y;
 
 
 void initField () {
@@ -139,11 +144,75 @@ void remap () {
 			printNumber (nums_left, i, j);
 		}
 	}
+	// and store the blank's position
+	blank_y = i;
+	blank_x = j;
 }
 
 
 void moveBlank (Directions dir) {
+	int aux;
+	switch (dir) {
+		case UP:
+			if (blank_y < SIDE_SIZE - 1) {
+				// swap in map
+				aux = map[blank_y][blank_x];
+				map[blank_y][blank_x] = map[blank_y + 1][blank_x];
+				map[blank_y + 1][blank_x] = aux;
+				// print the new values
+				printNumber (map[blank_y][blank_x], blank_y, blank_x);
+				printNumber (map[blank_y + 1][blank_x], blank_y + 1, blank_x);
 
+				// blank went down
+				blank_y++;
+			}
+			break;
+
+		case DOWN:
+			if (blank_y > 0) {
+				// swap in map
+				aux = map[blank_y][blank_x];
+				map[blank_y][blank_x] = map[blank_y - 1][blank_x];
+				map[blank_y - 1][blank_x] = aux;
+				// print the new values
+				printNumber (map[blank_y][blank_x], blank_y, blank_x);
+				printNumber (map[blank_y - 1][blank_x], blank_y - 1, blank_x);
+
+				// blank went up
+				blank_y--;
+			}
+			break;
+
+		case LEFT:
+			if (blank_x < SIDE_SIZE - 1) {
+				// swap in map
+				aux = map[blank_y][blank_x];
+				map[blank_y][blank_x] = map[blank_y][blank_x + 1];
+				map[blank_y][blank_x + 1] = aux;
+				// print the new values
+				printNumber (map[blank_y][blank_x], blank_y, blank_x);
+				printNumber (map[blank_y][blank_x + 1], blank_y, blank_x + 1);
+
+				// blank went right
+				blank_x++;
+			}
+			break;
+
+		case RIGHT:
+			if (blank_x > 0) {
+				// swap in map
+				aux = map[blank_y][blank_x];
+				map[blank_y][blank_x] = map[blank_y][blank_x - 1];
+				map[blank_y][blank_x - 1] = aux;
+				// print the new values
+				printNumber (map[blank_y][blank_x], blank_y, blank_x);
+				printNumber (map[blank_y][blank_x - 1], blank_y, blank_x - 1);
+
+				// blank went left
+				blank_x--;
+			}
+			break;
+	}
 }
 
 

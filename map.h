@@ -11,7 +11,7 @@ typedef enum {
 	UP,
 	DOWN,
 	LEFT,
-	RIGT
+	RIGHT
 } Directions;
 
 

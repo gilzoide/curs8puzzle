@@ -43,6 +43,23 @@ int main () {
 		switch (c) {
 			case 'r':
 				remap ();
+				break;
+
+			case KEY_UP:
+				moveBlank (UP);
+				break;
+
+			case KEY_DOWN:
+				moveBlank (DOWN);
+				break;
+
+			case KEY_LEFT:
+				moveBlank (LEFT);
+				break;
+
+			case KEY_RIGHT:
+				moveBlank (RIGHT);
+				break;
 		}
 	}
 
