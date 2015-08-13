@@ -3,6 +3,6 @@ local util = hell.utils
 build {
 	input = util.glob '*.c',
 	links = {'mosaic_color', 'ncurses', 'panel'},
-	flags = '-Wall -O3',
+	flags = '-Wall -O3 -g',
 	output = '8puzzle'
 }

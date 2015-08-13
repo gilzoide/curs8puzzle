@@ -36,7 +36,8 @@ int main () {
 	initHud ();
 	initField ();
 
-// main loop
+	remap ();
+
 	while (c != 'q') {
 		c = getch ();
 		switch (c) {
@@ -45,6 +46,7 @@ int main () {
 		}
 	}
 
+	destroyField ();
 	delwin (hud);
 	endwin ();
 	return 0;
