@@ -16,7 +16,7 @@ typedef enum {
 
 
 /// Initialize Field WINDOW and draw it
-void initField ();
+void initFields ();
 
 /// Reroll map, with random positions
 void remap ();
@@ -25,4 +25,4 @@ void remap ();
 void moveBlank (Directions dir);
 
 /// Destroy the Field WINDOW
-void destroyField ();
+void destroyFields ();

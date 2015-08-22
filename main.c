@@ -34,7 +34,7 @@ int main () {
 
 	initCurses ();
 	initHud ();
-	initField ();
+	initFields ();
 
 	remap ();
 
@@ -63,7 +63,7 @@ int main () {
 		}
 	}
 
-	destroyField ();
+	destroyFields ();
 	delwin (hud);
 	endwin ();
 	return 0;

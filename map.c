@@ -4,7 +4,7 @@
 #include <ncurses.h>
 #include <stdlib.h>
 
-WINDOW *field;
+WINDOW *field1, *field2;
 
 /// The number representations (in ASC)
 const char *nonumber[] = {
@@ -75,7 +75,7 @@ const char **numbers[] = {
 };
 
 /// Prints a number on the map
-void printNumber (int num, int y, int x) {
+void printNumber (WINDOW *field, int num, int y, int x) {
 	int i;
 	for (i = 0; i < CELL_HEIGHT; i++) {
 		mvwaddstr (field, y * (CELL_HEIGHT + 1) + i + 1, x * (CELL_WIDTH + 1) + 1,
@@ -87,52 +87,94 @@ void printNumber (int num, int y, int x) {
 }
 
 
-/// Our map
+/// Player map
 int map[SIDE_SIZE][SIDE_SIZE];
+/// Answer map
+int answer[SIDE_SIZE][SIDE_SIZE];
 /// Blank positions
 int blank_x;
 int blank_y;
 
 
-void initField () {
+void initFields () {
 	int height = SIDE_SIZE * CELL_HEIGHT + SIDE_SIZE + 1;
 	int width = SIDE_SIZE * CELL_WIDTH + SIDE_SIZE + 1;
 
-	field = subwin (stdscr, height, width,
-			(LINES - height) / 2, (COLS - width) / 2);
+	/* FIELD 1 */
+	field1 = subwin (stdscr, height, width,
+			(LINES - height) / 2, COLS / 2 - width);
 
 	// the box
-	box (field, ACS_VLINE, ACS_HLINE);
+	box (field1, ACS_VLINE, ACS_HLINE);
 
 	int i, j;
-	wattron (field, COLOR_PAIR (Normal));
+	wattron (field1, COLOR_PAIR (Normal));
 	// put vertical lines
 	for (i = 1; i < SIDE_SIZE; i++) {
 		for (j = 1; j < height - 1; j++) {
-			mvwaddch (field, j, i * (CELL_WIDTH + 1), ACS_VLINE);
+			mvwaddch (field1, j, i * (CELL_WIDTH + 1), ACS_VLINE);
 		}
 	}
 	// and horizontal ones
 	for (i = 1; i < SIDE_SIZE; i++) {
 		for (j = 1; j < width - 1; j++) {
-			mvwaddch (field, i * (CELL_HEIGHT + 1), j, ACS_HLINE);
+			mvwaddch (field1, i * (CELL_HEIGHT + 1), j, ACS_HLINE);
 		}
 	}
-	wrefresh (field);
+	wrefresh (field1);
+
+
+	/* FIELD 2 */
+	field2 = subwin (stdscr, height, width,
+			(LINES - height) / 2, (COLS + width) / 2);
+
+	// the box
+	box (field2, ACS_VLINE, ACS_HLINE);
+
+	wattron (field2, COLOR_PAIR (Normal));
+	// put vertical lines
+	for (i = 1; i < SIDE_SIZE; i++) {
+		for (j = 1; j < height - 1; j++) {
+			mvwaddch (field2, j, i * (CELL_WIDTH + 1), ACS_VLINE);
+		}
+	}
+	// and horizontal ones
+	for (i = 1; i < SIDE_SIZE; i++) {
+		for (j = 1; j < width - 1; j++) {
+			mvwaddch (field2, i * (CELL_HEIGHT + 1), j, ACS_HLINE);
+		}
+	}
+	wrefresh (field2);
 }
 
 
 void remap () {
 	int i, j;
-	// clean the map...
+	// clean the map/answer...
 	for (i = 0; i < SIDE_SIZE; i++) {
 		for (j = 0; j < SIDE_SIZE; j++) {
 			map[i][j] = -1;
+			answer[i][j] = -1;
 		}
 	}
 
-	// ...and put the new numbers
+	// ...put the numbers in answer...
+	wattron (field2, A_BOLD);
 	int nums_left = SIDE_SIZE * SIDE_SIZE;
+	while (nums_left) {
+		i = rand () % SIDE_SIZE;
+		j = rand () % SIDE_SIZE;
+		if (answer[i][j] == -1) {
+			nums_left--;
+			// set it in the answer
+			answer[i][j] = nums_left;
+			// and print, pliz
+			printNumber (field2, nums_left, i, j);
+		}
+	}
+
+	// ...and put the map numbers
+	nums_left = SIDE_SIZE * SIDE_SIZE;
 	while (nums_left) {
 		i = rand () % SIDE_SIZE;
 		j = rand () % SIDE_SIZE;
@@ -141,28 +183,30 @@ void remap () {
 			// set it in the map
 			map[i][j] = nums_left;
 			// and print, pliz
-			printNumber (nums_left, i, j);
+			wattrset (field1, nums_left == answer[i][j] ? 
+					COLOR_PAIR (GN) | A_BOLD : A_NORMAL);
+			printNumber (field1, nums_left, i, j);
 		}
 	}
 	// and store the blank's position
 	blank_y = i;
 	blank_x = j;
+
+}
+
+
+void swap (int *a, int *b) {
+	int aux = *a;
+	*a = *b;
+	*b = aux;
 }
 
 
 void moveBlank (Directions dir) {
-	int aux;
+	int old_y = blank_y, old_x = blank_x;
 	switch (dir) {
 		case UP:
 			if (blank_y < SIDE_SIZE - 1) {
-				// swap in map
-				aux = map[blank_y][blank_x];
-				map[blank_y][blank_x] = map[blank_y + 1][blank_x];
-				map[blank_y + 1][blank_x] = aux;
-				// print the new values
-				printNumber (map[blank_y][blank_x], blank_y, blank_x);
-				printNumber (map[blank_y + 1][blank_x], blank_y + 1, blank_x);
-
 				// blank went down
 				blank_y++;
 			}
@@ -170,14 +214,6 @@ void moveBlank (Directions dir) {
 
 		case DOWN:
 			if (blank_y > 0) {
-				// swap in map
-				aux = map[blank_y][blank_x];
-				map[blank_y][blank_x] = map[blank_y - 1][blank_x];
-				map[blank_y - 1][blank_x] = aux;
-				// print the new values
-				printNumber (map[blank_y][blank_x], blank_y, blank_x);
-				printNumber (map[blank_y - 1][blank_x], blank_y - 1, blank_x);
-
 				// blank went up
 				blank_y--;
 			}
@@ -185,14 +221,6 @@ void moveBlank (Directions dir) {
 
 		case LEFT:
 			if (blank_x < SIDE_SIZE - 1) {
-				// swap in map
-				aux = map[blank_y][blank_x];
-				map[blank_y][blank_x] = map[blank_y][blank_x + 1];
-				map[blank_y][blank_x + 1] = aux;
-				// print the new values
-				printNumber (map[blank_y][blank_x], blank_y, blank_x);
-				printNumber (map[blank_y][blank_x + 1], blank_y, blank_x + 1);
-
 				// blank went right
 				blank_x++;
 			}
@@ -200,22 +228,23 @@ void moveBlank (Directions dir) {
 
 		case RIGHT:
 			if (blank_x > 0) {
-				// swap in map
-				aux = map[blank_y][blank_x];
-				map[blank_y][blank_x] = map[blank_y][blank_x - 1];
-				map[blank_y][blank_x - 1] = aux;
-				// print the new values
-				printNumber (map[blank_y][blank_x], blank_y, blank_x);
-				printNumber (map[blank_y][blank_x - 1], blank_y, blank_x - 1);
-
 				// blank went left
 				blank_x--;
 			}
 			break;
 	}
+	swap (&map[old_y][old_x], &map[blank_y][blank_x]);
+	// print number in old position
+	wattrset (field1, map[old_y][old_x] == answer[old_y][old_x] ? 
+			COLOR_PAIR (GN) | A_BOLD : A_NORMAL);
+	printNumber (field1, map[old_y][old_x], old_y, old_x);
+
+	// and the blank
+	printNumber (field1, map[blank_y][blank_x], blank_y, blank_x);
 }
 
 
-void destroyField () {
-	delwin (field);
+void destroyFields () {
+	delwin (field1);
+	delwin (field2);
 }
